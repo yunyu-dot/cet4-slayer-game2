@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>四级单词 · 杀戮尖塔肉鸽</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft Yahei",sans-serif}
+body{
+  background:#0c0e18;
+  color:#e4e7f2;
+  overflow-x:hidden;
+  min-height:100vh;
+}
+#bgCanvas{
+  position:fixed;
+  top:0;left:0;
+  z-index:0;
+  opacity:0.35;
+}
+.container{
+  position:relative;
+  z-index:1;
+  max-width:960px;
+  margin:0 auto;
+  padding:24px 16px;
+}
+header{
+  text-align:center;
+  margin-bottom:24px;
+}
+header h1{
+  font-size:30px;
+  color:#ff9e64;
+  text-shadow:0 0 12px #994b24;
+  letter-spacing:2px;
+}
+header p{
+  color:#8892b0;
+  margin-top:6px;
+}
+.nav-bar{
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  flex-wrap:wrap;
+  margin-bottom:24px;
+}
+.btn{
+  padding:10px 18px;
+  border:none;
+  border-radius:8px;
+  background:#17223b;
+  color:#b4c7ee;
+  border:1px solid #2c4270;
+  cursor:pointer;
+  font-size:15px;
+  transition:all 0.25s ease;
+}
+.btn:hover{
+  background:#23375f;
+  border-color:#4878c9;
+  box-shadow:0 0 10px #2b4b8677;
+}
+.btn-primary{
+  background:#7c3024;
+  border-color:#bb5038;
+  color:#fff;
+}
+.btn-success{
+  background:#205940;
+  border-color:#37996d;
+}
+.btn-danger{
+  background:#5c2438;
+  border-color:#993b5c;
+}
+.btn-option{
+  width:100%;
+  text-align:left;
+  padding:14px 16px;
+  margin:8px 0;
+  font-size:16px;
+}
+.panel{
+  background:#11182bdd;
+  border:1px solid #273b66;
+  border-radius:12px;
+  padding:22px;
+  box-shadow:0 0 18px #14244660;
+  display:none;
+}
+.panel.active{
+  display:block;
+  animation:fadeIn 0.35s ease;
+}
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.info-row{
+  display:flex;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:16px;
+  color:#ffb380;
+}
+.word-card{
+  background:#1f1c35;
+  padding:24px;
+  border-radius:10px;
+  text-align:center;
+  margin:18px 0;
+  border:1px solid #593b80;
+}
+.word-en{
+  font-size:32px;
+  color:#fff;
+  margin-bottom:10px;
+}
+.word-phonetic{
+  color:#a8a9c2;
+  font-size:16px;
+}
+.tip{
+  text-align:center;
+  margin:14px 0;
+  font-size:17px;
+}
+.correct{color:#60e090}
+.wrong{color:#ff7788}
+.progress{
+  height:10px;
+  background:#10182c;
+  border-radius:10px;
+  overflow:hidden;
+  margin:10px 0 16px;
+}
+.progress-bar{
+  height:100%;
+  background:#e27040;
+  width:0%;
+  transition:width 0.3s;
+}
+.item-row{
+  padding:12px 14px;
+  background:#17223b;
+  border-radius:8px;
+  margin:10px 0;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.relic-box{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:12px 0;
+}
+.relic{
+  background:#38245c;
+  border:1px solid #703899;
+  padding:6px 10px;
+  border-radius:6px;
+  font-size:13px;
+  color:#e2b8ff;
+}
+.choose-node{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:12px;
+  margin:16px 0;
+}
+.choose-node .btn{
+  padding:20px 10px;
+  font-size:16px;
+}
+.checkin-record{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:14px;
+}
+.checkin-day{
+  width:36px;height:36px;
+  border-radius:6px;
+  background:#17223b;
+  display:grid;
+  place-items:center;
+  font-size:13px;
+}
+.checkin-day.done{
+  background:#256b4b;
+  color:#8cf0bc;
+}
+.help-text{
+  color:#8892b0;
+  font-size:14px;
+  margin-top:10px;
+}
+.reward-card{
+  background:#242042;
+  border:1px solid #544899;
+  padding:16px;
+  border-radius:10px;
+  margin:10px 0;
+  cursor:pointer;
+}
+.reward-card:hover{
+  border-color:#8470dd;
+  background:#2c2752;
+}
+</style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+<div class="container">
+  <header>
+    <h1>🔥 四级单词 · 杀戮尖塔肉鸽</h1>
+    <p>战斗｜遗物｜卡组｜休息点｜BOSS战｜听力｜错题｜打卡</p>
+  </header>
+  <div class="nav-bar">
+    <button class="btn btn-primary" onclick="showPanel('slay')">⚔️ 尖塔闯关</button>
+    <button class="btn" onclick="showPanel('listening')">🎧 听力模式</button>
+    <button class="btn" onclick="showPanel('wrongbook')">📖 错题本</button>
+    <button class="btn" onclick="showPanel('checkin')">📅 打卡中心</button>
+  </div>
+
+  <div id="slay" class="panel active">
+    <div class="info-row">
+      <div>层数：<span id="stFloor">1</span></div>
+      <div>生命：<span id="stHp">50</span>/<span id="stMaxHp">50</span></div>
+      <div>当前节点：<span id="stNode">战斗</span></div>
+    </div>
+    <div class="relic-box" id="relicBox"></div>
+    <div class="progress">
+      <div class="progress-bar" id="fightProgress"></div>
+    </div>
+    <div class="word-card">
+      <div class="word-en" id="fightWord">点击【开始冒险】</div>
+      <div class="word-phonetic" id="fightPhonetic"></div>
+    </div>
+    <div id="optionBox"></div>
+    <div class="tip" id="fightTip"></div>
+    <div class="nav-bar" style="margin-top:16px;">
+      <button class="btn btn-primary" onclick="startAdventure()">🎮 开始冒险</button>
+      <button class="btn" onclick="playFightVoice()">🔊 听发音</button>
+      <button class="btn btn-danger" onclick="resetAdventure()">放弃本局</button>
+    </div>
+    <div id="nodeChooseBox" class="choose-node" style="display:none">
+      <button class="btn btn-success" onclick="selectNode('fight')">⚔️ 普通战斗</button>
+      <button class="btn btn-primary" onclick="selectNode('elite')">👹 精英战斗</button>
+      <button class="btn" onclick="selectNode('rest')">🏕️ 休息点</button>
+    </div>
+    <div id="rewardBox" style="display:none;margin-top:16px;">
+      <h3 style="text-align:center;margin-bottom:12px;">🎉 选择奖励</h3>
+      <div id="rewardList"></div>
+    </div>
+  </div>
+
+  <div id="listening" class="panel">
+    <div class="info-row"><div>听力试炼 · 四选一</div></div>
+    <div class="word-card">
+      <div class="word-en" id="listenWord">点击播放听力</div>
+      <div class="word-phonetic" id="listenPhonetic"></div>
+    </div>
+    <div id="listenOptionBox"></div>
+    <div class="tip" id="listenTip"></div>
+    <div class="nav-bar">
+      <button class="btn btn-primary" onclick="playListenVoice()">🔊 播放听力</button>
+      <button class="btn" onclick="nextListenWord()">下一题</button>
+    </div>
+  </div>
+
+  <div id="wrongbook" class="panel">
+    <h2 style="margin-bottom:16px;">📖 错题修行录</h2>
+    <div id="wrongList"></div>
+    <div class="nav-bar" style="margin-top:20px;">
+      <button class="btn btn-primary" onclick="addWrongToDeck()">把错题加入卡组</button>
+      <button class="btn btn-danger" onclick="clearWrong()">清空错题本</button>
+    </div>
+  </div>
+
+  <div id="checkin" class="panel">
+    <h2 style="margin-bottom:16px;">📅 每日修行打卡</h2>
+    <p>连续打卡：<span id="continueDay">0</span> 天</p>
+    <div class="checkin-record" id="checkinBox"></div>
+    <div class="nav-bar" style="margin-top:20px;">
+      <button class="btn btn-primary" onclick="doCheckin()">✅ 今日打卡</button>
+    </div>
+    <div class="help-text">打卡记录保存在本地浏览器</div>
+  </div>
+</div>
+
+<script>
+const CET4_WORDS = [
+  {en:"abandon", phonetic:"/əˈbændən/", cn:"抛弃；放弃"},
+  {en:"ability", phonetic:"/əˈbɪləti/", cn:"能力；才能"},
+  {en:"abnormal", phonetic:"/æbˈnɔːml/", cn:"反常的，异常的"},
+  {en:"abolish", phonetic:"/əˈbɒlɪʃ/", cn:"废除，废止"},
+  {en:"abroad", phonetic:"/əˈbrɔːd/", cn:"在国外；到海外"},
+  {en:"absent", phonetic:"/ˈæbsənt/", cn:"缺席的；不在的"},
+  {en:"absolute", phonetic:"/ˈæbsəluːt/", cn:"绝对的；完全的"},
+  {en:"absorb", phonetic:"/əbˈsɔːb/", cn:"吸收；吸引"},
+  {en:"abstract", phonetic:"/ˈæbstrækt/", cn:"抽象的；摘要"},
+  {en:"abundant", phonetic:"/əˈbʌndənt/", cn:"大量的，丰富的"},
+  {en:"abuse", phonetic:"/əˈbjuːz/", cn:"滥用；虐待"},
+  {en:"accelerate", phonetic:"/əkˈseləreɪt/", cn:"加速；促进"},
+  {en:"accent", phonetic:"/ˈæksent/", cn:"口音；重音"},
+  {en:"accept", phonetic:"/əkˈsept/", cn:"接受；承认"},
+  {en:"access", phonetic:"/ˈækses/", cn:"通道；访问"},
+];
+const DISTURB = [
+  "快乐的，愉悦的","森林，树林","建造，构造","猜测，猜想","星星，恒星",
+  "河流，溪水","战斗，斗争","购买，采购","绘画，图画","诚实的",
+  "潮湿的，湿润的","收割，收获","提醒，使想起","抱怨，诉苦","舞蹈"
+];
+
+let saveData = JSON.parse(localStorage.getItem("cet4Slay")) || {
+  wrongWords:[],
+  checkinDays:[],
+};
+function save(){
+  localStorage.setItem("cet4Slay", JSON.stringify(saveData));
+}
+
+let game = {
+  floor:1,
+  hp:50,
+  maxHp:50,
+  relics:[],
+  deck:[],
+  drawPile:[],
+  discard:[],
+  currentWord:null,
+  nodeType:"fight",
+  fightCount:0,
+  fightTotal:4,
+  isFighting:false
+};
+const RELIC_LIST = [
+  {name:"词典",desc:"答对单词额外回2血"},
+  {name:"护符",desc:"答错第一次不扣血（每战斗一次重置）"},
+  {name:"鹰眼",desc:"选项更容易分辨，干扰项变少"},
+];
+
+function showPanel(id){
+  document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  if(id==="wrongbook") renderWrongBook();
+  if(id==="checkin") renderCheckin();
+}
+
+function startAdventure(){
+  game.floor = 1;
+  game.hp = game.maxHp = 50;
+  game.relics = [];
+  game.deck = shuffle([...CET4_WORDS]).slice(0,8);
+  game.drawPile = shuffle([...game.deck]);
+  game.discard = [];
+  game.nodeType = "fight";
+  game.fightCount = 0;
+  game.isFighting = false;
+  document.getElementById("nodeChooseBox").style.display="none";
+  document.getElementById("rewardBox").style.display="none";
+  startBattle();
+  renderGame();
+}
+function resetAdventure(){
+  game.hp=0;
+  alert("冒险结束，重新开始");
+  startAdventure();
+}
+function renderGame(){
+  document.getElementById("stFloor").innerText = game.floor;
+  document.getElementById("stHp").innerText = game.hp;
+  document.getElementById("stMaxHp").innerText = game.maxHp;
+  document.getElementById("stNode").innerText = getNodeName(game.nodeType);
+  document.getElementById("relicBox").innerHTML = game.relics.map(r=>`<div class="relic">${r.name}:${r.desc}</div>`).join("");
+  document.getElementById("fightProgress").style.width = (game.fightCount/game.fightTotal*100)+"%";
+}
+function getNodeName(t){
+  if(t==="fight") return "普通战斗";
+  if(t==="elite") return "精英战斗";
+  if(t==="rest") return "休息点";
+  return "未知";
+}
+function startBattle(){
+  game.isFighting = true;
+  game.fightCount = 0;
+  if(game.nodeType === "elite") game.fightTotal = 6;
+  else game.fightTotal = 4;
+  drawNextWord();
+}
+function drawNextWord(){
+  if(game.drawPile.length <= 0){
+    game.drawPile = shuffle([...game.discard]);
+    game.discard = [];
+  }
+  game.currentWord = game.drawPile.pop();
+  game.discard.push(game.currentWord);
+  renderWordAndOptions();
+  document.getElementById("fightTip").innerText = "";
+}
+function renderWordAndOptions(){
+  const w = game.currentWord;
+  document.getElementById("fightWord").innerText = w.en;
+  document.getElementById("fightPhonetic").innerText = w.phonetic;
+  let opts = [w.cn];
+  while(opts.length <4){
+    let d = DISTURB[Math.floor(Math.random()*DISTURB.length)];
+    if(!opts.includes(d)) opts.push(d);
+  }
+  opts = shuffle(opts);
+  let html = "";
+  opts.forEach(opt=>{
+    html += `<button class="btn btn-option" onclick="selectAnswer('${opt}')">${opt}</button>`;
+  })
+  document.getElementById("optionBox").innerHTML = html;
+}
+function selectAnswer(sel){
+  const w = game.currentWord;
+  const tipDom = document.getElementById("fightTip");
+  let hasAmulet = game.relics.find(x=>x.name==="护符");
+  if(sel === w.cn){
+    tipDom.innerHTML = `<span class="correct">✅ 回答正确！</span>`;
+    if(game.relics.find(x=>x.name==="词典")){
+      game.hp = Math.min(game.maxHp, game.hp+2);
+      tipDom.innerHTML += " 【词典】+2HP";
+    }
+    game.fightCount++;
+  }else{
+    tipDom.innerHTML = `<span class="wrong">❌ 答错！正确：${w.cn}</span>`;
+    if(!saveData.wrongWords.find(x=>x.en===w.en)){
+      saveData.wrongWords.push(w); save();
+    }
+    if(hasAmulet){
+      game.relics = game.relics.filter(x=>x.name!="护符");
+      tipDom.innerHTML += "【护符抵挡伤害】";
+    }else{
+      let dmg = game.nodeType==="elite"?6:4;
+      game.hp -= dmg;
+    }
+    game.fightCount++;
+  }
+  renderGame();
+  if(game.hp <=0){
+    tipDom.innerHTML += "<br>💀 血量归零，冒险失败！";
+    return;
+  }
+  if(game.fightCount >= game.fightTotal){
+    setTimeout(showReward,1200);
+    return;
+  }
+  setTimeout(drawNextWord,1100);
+}
+function playFightVoice(){
+  if(game.currentWord) speak(game.currentWord.en);
+}
+function showReward(){
+  game.isFighting = false;
+  document.getElementById("optionBox").innerHTML = "";
+  document.getElementById("rewardBox").style.display="block";
+  document.getElementById("nodeChooseBox").style.display="none";
+  const rewardTypes = ["relic","heal","card"];
+  const rewards = shuffle(rewardTypes).slice(0,3);
+  let html = "";
+  rewards.forEach(type=>{
+    if(type==="relic"){
+      const r = RELIC_LIST[Math.floor(Math.random()*RELIC_LIST.length)];
+      html += `<div class="reward-card" onclick="pickReward('relic','${r.name}')">🎁 遗物【${r.name}】<br>${r.desc}</div>`;
+    }else if(type==="heal"){
+      html += `<div class="reward-card" onclick="pickReward('heal')">❤️ 恢复 8 点生命</div>`;
+    }else if(type==="card"){
+      const newW = CET4_WORDS[Math.floor(Math.random()*CET4_WORDS.length)];
+      html += `<div class="reward-card" onclick="pickReward('card','${newW.en}')">📇 新单词卡：${newW.en} ${newW.cn}</div>`;
+    }
+  })
+  document.getElementById("rewardList").innerHTML = html;
+}
+function pickReward(type,val){
+  if(type==="relic"){
+    const r = RELIC_LIST.find(x=>x.name===val);
+    if(!game.relics.find(x=>x.name===r.name)) game.relics.push(r);
+  }else if(type==="heal"){
+    game.hp = Math.min(game.maxHp, game.hp+8);
+  }else if(type==="card"){
+    const w = CET4_WORDS.find(x=>x.en===val);
+    game.deck.push(w);
+    game.discard.push(w);
+  }
+  document.getElementById("rewardBox").style.display="none";
+  game.floor++;
+  document.getElementById("nodeChooseBox").style.display="grid";
+  renderGame();
+}
+function selectNode(nodeType){
+  game.nodeType = nodeType;
+  document.getElementById("nodeChooseBox").style.display="none";
+  if(nodeType==="rest"){
+    let opt = confirm("休息点：回血5点？确定");
+    if(opt) game.hp = Math.min(game.maxHp, game.hp+5);
+  }
+  startBattle();
+  renderGame();
+}
+
+let listenCurrent = null;
+function nextListenWord(){
+  listenCurrent = shuffle([...CET4_WORDS])[0];
+  document.getElementById("listenWord").innerText = "🔊 点击播放听力";
+  document.getElementById("listenPhonetic").innerText = "";
+  document.getElementById("listenTip").innerText = "";
+  document.getElementById("listenOptionBox").innerHTML = "";
+}
+function playListenVoice(){
+  if(!listenCurrent) nextListenWord();
+  speak(listenCurrent.en);
+  document.getElementById("listenWord").innerText = listenCurrent.en;
+  document.getElementById("listenPhonetic").innerText = listenCurrent.phonetic;
+  let opts = [listenCurrent.cn];
+  while(opts.length<4){
+    let d = DISTURB[Math.floor(Math.random()*DISTURB.length)];
+    if(!opts.includes(d)) opts.push(d);
+  }
+  opts = shuffle(opts);
+  let html = "";
+  opts.forEach(opt=>{
+    html += `<button class="btn btn-option" onclick="selectListenAnswer('${opt}')">${opt}</button>`;
+  })
+  document.getElementById("listenOptionBox").innerHTML = html;
+}
+function selectListenAnswer(sel){
+  const tipDom = document.getElementById("listenTip");
+  if(sel === listenCurrent.cn){
+    tipDom.innerHTML = `<span class="correct">✅ 听力正确</span>`;
+  }else{
+    tipDom.innerHTML = `<span class="wrong">❌ 正确答案：${listenCurrent.cn}</span>`;
+    if(!saveData.wrongWords.find(x=>x.en===listenCurrent.en)){
+      saveData.wrongWords.push(listenCurrent); save();
+    }
+  }
+}
+
+function renderWrongBook(){
+  const box = document.getElementById("wrongList");
+  if(saveData.wrongWords.length ===0){
+    box.innerHTML = "<div class='tip'>错题本空空如也！</div>";
+    return;
+  }
+  box.innerHTML = saveData.wrongWords.map(item=>`
+    <div class="item-row">
+      <div>${item.en} ${item.phonetic} —— ${item.cn}</div>
+      <button class="btn" onclick="speak('${item.en}')">🔊</button>
+    </div>
+  `).join("");
+}
+function clearWrong(){
+  if(!confirm("清空错题？")) return;
+  saveData.wrongWords = []; save(); renderWrongBook();
+}
+function addWrongToDeck(){
+  if(saveData.wrongWords.length===0) return alert("没有错题");
+  game.deck.push(...saveData.wrongWords);
+  alert("✅ 错题全部加入卡组，下次冒险可以刷到！");
+}
+
+function getTodayStr(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function doCheckin(){
+  const today = getTodayStr();
+  if(saveData.checkinDays.includes(today)) return alert("✅ 今天已经打卡");
+  saveData.checkinDays.push(today); save(); renderCheckin();
+}
+function renderCheckin(){
+  const box = document.getElementById("checkinBox");
+  const continueDom = document.getElementById("continueDay");
+  let continueCnt = 0;
+  let day = new Date();
+  for(let i=0;i<100;i++){
+    const s = `${day.getFullYear()}-${String(day.getMonth()+1).padStart(2,'0')}-${String(day.getDate()).padStart(2,'0')}`;
+    if(saveData.checkinDays.includes(s)) continueCnt++;
+    else break;
+    day.setDate(day.getDate()-1);
+  }
+  continueDom.innerText = continueCnt;
+  let html = "";
+  for(let i=29;i>=0;i--){
+    const t = new Date();
+    t.setDate(t.getDate()-i);
+    const s = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+    const done = saveData.checkinDays.includes(s);
+    html += `<div class="checkin-day ${done?'done':''}">${t.getDate()}</div>`;
+  }
+  box.innerHTML = html;
+}
+
+function shuffle(arr){
+  let a = [...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+function speak(text){
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = "en-US";
+  speechSynthesis.speak(utter);
+}
+
+const canvas = document.getElementById("bgCanvas");
+const ctx = canvas.getContext("2d");
+let w,h;
+let particles = [];
+function resize(){
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+}
+function createParticle(){
+  return {
+    x:Math.random()*w,
+    y:Math.random()*h,
+    r:Math.random()*1.2+0.2,
+    dx:(Math.random()-0.5)*0.4,
+    dy:(Math.random()-0.5)*0.4,
+  }
+}
+function initParticle(){
+  particles = [];
+  for(let i=0;i<80;i++) particles.push(createParticle());
+}
+function draw(){
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle="#ff9e64";
+  particles.forEach(p=>{
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fill();
+    p.x += p.dx;
+    p.y += p.dy;
+    if(p.x<0||p.x>w) p.dx *= -1;
+    if(p.y<0||p.y>h) p.dy *= -1;
+  })
+  requestAnimationFrame(draw);
+}
+window.addEventListener("resize",()=>{resize();initParticle()});
+resize();
+initParticle();
+draw();
+</script>
+</body>
+</html>
